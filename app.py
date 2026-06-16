@@ -193,9 +193,121 @@ elif page == "Real-Time Detection":
     elif source == "Video File Upload":
         uploaded_video = st.file_uploader("Choose a road inspection video...", type=["mp4", "avi", "mov"])
         if uploaded_video is not None:
-            # Streamlit video preview
-            st.video(uploaded_video)
-            st.info("Video simulation processing ready. Use 'Mock Live Camera Feed' to see real-time frame annotation stream.")
+            # Initialize session states for video
+            if "video_detections" not in st.session_state:
+                st.session_state.video_detections = None
+            if "video_processed_path" not in st.session_state:
+                st.session_state.video_processed_path = None
+                
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("### Original Video Uploaded")
+                st.video(uploaded_video)
+            
+            # Save uploaded video to temp file for OpenCV reading
+            import tempfile
+            tfile = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+            tfile.write(uploaded_video.read())
+            tfile.close()
+            
+            with col2:
+                st.write("### AI Analysis Actions")
+                analyze_btn = st.button("🚧 Run YOLOv8 Video Inspection")
+                
+            if analyze_btn:
+                cap = cv2.VideoCapture(tfile.name)
+                
+                # Retrieve video specs
+                width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                
+                # Set up Output Writer
+                out_path = "processed_output.mp4"
+                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                out = cv2.VideoWriter(out_path, fourcc, fps, (width, height))
+                
+                progress_bar = st.progress(0.0)
+                status_text = st.empty()
+                frame_placeholder = st.empty()
+                
+                frame_count = 0
+                detected_counts = 0
+                all_detections = []
+                
+                try:
+                    while cap.isOpened():
+                        ret, frame = cap.read()
+                        if not ret:
+                            break
+                        
+                        # Apply YOLO/Mock detector
+                        annotated, detections = detector.detect(frame)
+                        out.write(annotated)
+                        
+                        # Show current processed frame in dashboard
+                        frame_placeholder.image(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB), use_container_width=True)
+                        
+                        # Track detections
+                        if detections:
+                            detected_counts += len(detections)
+                            for d in detections:
+                                all_detections.append(d)
+                        
+                        frame_count += 1
+                        progress = min(float(frame_count) / max(total_frames, 1), 1.0)
+                        progress_bar.progress(progress)
+                        status_text.text(f"Processing Frame {frame_count}/{total_frames} (Found: {detected_counts} issues)...")
+                    
+                    st.session_state.video_detections = all_detections
+                    st.session_state.video_processed_path = out_path
+                    st.success("YOLOv8 Video Inspection Completed!")
+                    
+                finally:
+                    cap.release()
+                    out.release()
+                    try:
+                        os.unlink(tfile.name)
+                    except Exception:
+                        pass
+            
+            # Render download/logging options if processing is completed
+            if st.session_state.video_processed_path is not None:
+                st.write("---")
+                col_actions1, col_actions2 = st.columns(2)
+                
+                with col_actions1:
+                    if st.session_state.video_detections:
+                        st.write(f"### Detections Found: {len(st.session_state.video_detections)}")
+                        if st.button("Save Video Detections to Database & Map"):
+                            # Sample unique logged damages to prevent flooding database
+                            sampled_detections = random.sample(st.session_state.video_detections, min(10, len(st.session_state.video_detections)))
+                            for d in sampled_detections:
+                                lat = city_coords[0] + np.random.uniform(-0.003, 0.003)
+                                lng = city_coords[1] + np.random.uniform(-0.003, 0.003)
+                                add_detection(
+                                    damage_type=d["class_name"],
+                                    confidence=float(d["confidence"]),
+                                    severity=d["severity"],
+                                    latitude=lat,
+                                    longitude=lng,
+                                    road_name=f"{city_coords[2]} (Video Link), {selected_city}"
+                                )
+                            st.success("Successfully logged annotated locations to database!")
+                
+                with col_actions2:
+                    if os.path.exists(st.session_state.video_processed_path):
+                        st.write("### Download Results")
+                        with open(st.session_state.video_processed_path, "rb") as file:
+                            st.download_button(
+                                label="📥 Download Annotated Video File",
+                                data=file,
+                                file_name="Annotated_Road_Damage.mp4",
+                                mime="video/mp4"
+                            )
+
+
 
     elif source == "Live Camera Feed":
         camera_mode = st.radio("Select Camera Source:", ["Real Webcam (Local USB Camera)", "Simulated Dashcam Feed"])
