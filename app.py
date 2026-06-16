@@ -36,70 +36,78 @@ st.markdown("""
     <style>
     /* Main app styles */
     .stApp {
-        background-color: #0F172A;
-        color: #F8FAFC;
+        background-color: #F8FAFC;
+        color: #0F172A;
     }
     .main-title {
-        font-family: 'Outfit', 'Inter', sans-serif;
-        color: #10B981;
-        font-size: 2.8rem;
+        font-family: 'Inter', sans-serif;
+        color: #0F172A;
+        font-size: 2.5rem;
         font-weight: 800;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.1rem;
+        letter-spacing: -0.025em;
     }
     .subtitle {
         font-family: 'Inter', sans-serif;
-        color: #94A3B8;
-        font-size: 1.1rem;
+        color: #64748B;
+        font-size: 1.05rem;
         margin-bottom: 2rem;
     }
     /* Metric Cards */
     .metric-container {
         display: flex;
-        gap: 1rem;
+        gap: 1.25rem;
         margin-bottom: 2rem;
     }
     .metric-card {
-        background-color: #1E293B;
-        border-radius: 12px;
+        background-color: #FFFFFF;
+        border-radius: 8px;
         padding: 1.5rem;
         flex: 1;
-        border: 1px solid #334155;
-        text-align: center;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        transition: transform 0.2s;
+        border: 1px solid #E2E8F0;
+        text-align: left;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+        transition: all 0.2s ease-in-out;
     }
     .metric-card:hover {
-        transform: translateY(-4px);
-        border-color: #10B981;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border-color: #CBD5E1;
     }
     .metric-value {
-        font-size: 2rem;
+        font-size: 2.25rem;
         font-weight: 700;
-        color: #10B981;
+        color: #0F172A;
+        line-height: 1;
     }
     .metric-label {
-        font-size: 0.9rem;
-        color: #94A3B8;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #64748B;
         margin-top: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
     </style>
 """, unsafe_allow_html=True)
+# Clean Header Section (No Sidebar)
+st.markdown("<h1 class='main-title'>InspectAI &mdash; Road Quality Mapping</h1>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'>Automated AI infrastructure inspection, classification, and GPS logging system.</p>", unsafe_allow_html=True)
 
-# Navigation
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/1048/1048329.png", width=80)
-st.sidebar.markdown("<h2 style='color: #10B981; font-weight: 700;'>Navigation</h2>", unsafe_allow_html=True)
-page = st.sidebar.radio(
-    "Go to:",
-    ["Dashboard Overview", "Real-Time Detection", "Interactive Damage Map", "Analytics & Insights", "Export Reports", "Settings"]
-)
+# Horizontal Top Tabs for Navigation
+tabs = st.tabs([
+    "📊 Dashboard Overview", 
+    "🚧 Real-Time Detection", 
+    "🗺️ Interactive Damage Map", 
+    "📈 Analytics & Insights", 
+    "📋 Export Reports", 
+    "⚙️ Settings"
+])
 
 # -----------------
 # 1. OVERVIEW PAGE
 # -----------------
-if page == "Dashboard Overview":
-    st.markdown("<h1 class='main-title'>Road Damage Detection & Mapping</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitle'>Automated AI infrastructure inspection, classification, and GPS logging system.</p>", unsafe_allow_html=True)
-    
+with tabs[0]:
     # Load stats
     df = get_all_detections()
     total = len(df)
@@ -110,9 +118,9 @@ if page == "Dashboard Overview":
     # Render KPI Cards
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.markdown(f'<div class="metric-card"><div class="metric-value">{total}</div><div class="metric-label">Total Damages Detected</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><div class="metric-value">{total}</div><div class="metric-label">Total Damages</div></div>', unsafe_allow_html=True)
     with col2:
-        st.markdown(f'<div class="metric-card"><div class="metric-value" style="color: #EF4444;">{high}</div><div class="metric-label">High Severity (Immediate Attention)</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><div class="metric-value" style="color: #EF4444;">{high}</div><div class="metric-label">High Severity</div></div>', unsafe_allow_html=True)
     with col3:
         st.markdown(f'<div class="metric-card"><div class="metric-value" style="color: #F59E0B;">{med}</div><div class="metric-label">Medium Severity</div></div>', unsafe_allow_html=True)
     with col4:
@@ -130,10 +138,7 @@ if page == "Dashboard Overview":
 # --------------------------
 # 2. REAL-TIME DETECTION
 # --------------------------
-elif page == "Real-Time Detection":
-    st.markdown("<h1 class='main-title'>Real-Time Damage Analyzer</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitle'>Upload images/videos or run a mock live feed to inspect roads and log damage automatically.</p>", unsafe_allow_html=True)
-    
+with tabs[1]:
     source = st.radio("Select Input Source:", ["Image Upload", "Video File Upload", "Live Camera Feed"])
     
     # Coordinates mapping simulator for the new detections
@@ -308,7 +313,6 @@ elif page == "Real-Time Detection":
                             )
 
 
-
     elif source == "Live Camera Feed":
         camera_mode = st.radio("Select Camera Source:", ["Real Webcam (Local USB Camera)", "Simulated Dashcam Feed"])
         
@@ -407,10 +411,7 @@ elif page == "Real-Time Detection":
 # -----------------------------
 # 3. INTERACTIVE DAMAGE MAP
 # -----------------------------
-elif page == "Interactive Damage Map":
-    st.markdown("<h1 class='main-title'>GPS Road Damage Mapper</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitle'>Interactive Leaflet view showing coordinates and severity level of all flagged road damages.</p>", unsafe_allow_html=True)
-    
+with tabs[2]:
     df = get_all_detections()
     
     if df.empty:
@@ -432,7 +433,7 @@ elif page == "Interactive Damage Map":
         else:
             center_lat, center_lng = 33.6844, 73.0479
             
-        m = folium.Map(location=[center_lat, center_lng], zoom_start=11, tiles="CartoDB dark_matter")
+        m = folium.Map(location=[center_lat, center_lng], zoom_start=11, tiles="CartoDB positron")
         
         # Color mapping for severity
         severity_colors = {
@@ -454,10 +455,7 @@ elif page == "Interactive Damage Map":
 # -----------------------------
 # 4. ANALYTICS & INSIGHTS
 # -----------------------------
-elif page == "Analytics & Insights":
-    st.markdown("<h1 class='main-title'>Analytics & Infrastructure Dashboard</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitle'>High-level metrics, trends, and breakdown reports.</p>", unsafe_allow_html=True)
-    
+with tabs[3]:
     df = get_all_detections()
     
     if df.empty:
@@ -482,10 +480,7 @@ elif page == "Analytics & Insights":
 # -----------------------------
 # 5. EXPORT REPORTS
 # -----------------------------
-elif page == "Export Reports":
-    st.markdown("<h1 class='main-title'>Report Center</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitle'>Export beautiful, custom PDF reports for local authorities and maintenance departments.</p>", unsafe_allow_html=True)
-    
+with tabs[4]:
     df = get_all_detections()
     
     if df.empty:
@@ -516,10 +511,7 @@ elif page == "Export Reports":
 # -----------------------------
 # 6. SETTINGS & DB MGMT
 # -----------------------------
-elif page == "Settings":
-    st.markdown("<h1 class='main-title'>System Settings</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitle'>Manage configurations, weight files, and clear logs.</p>", unsafe_allow_html=True)
-    
+with tabs[5]:
     st.write("### Model Options")
     model_opt = st.selectbox("Select Active YOLO Weights:", ["Mock Simulator Model (Default)", "yolov8n.pt", "best.pt (Custom Trained)"])
     

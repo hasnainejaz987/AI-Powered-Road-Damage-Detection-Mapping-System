@@ -15,8 +15,8 @@ def generate_pdf_report(dataframe, filename="road_damage_report.pdf"):
     story = []
     styles = getSampleStyleSheet()
     
-    # Custom styles matching our primary brand theme (Emerald Green)
-    primary_color = colors.HexColor("#10B981")
+    # Custom styles matching our primary brand theme (Deep Navy Blue)
+    primary_color = colors.HexColor("#1E3A8A")
     text_color = colors.HexColor("#1E293B")
     
     title_style = ParagraphStyle(
